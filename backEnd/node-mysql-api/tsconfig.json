@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "moduleResolution": "node16",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "strict": false,
+    "target": "es2018",
+    "module": "node16",
+    "lib": ["es2018"],
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "resolveJsonModule": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules"]
+}
