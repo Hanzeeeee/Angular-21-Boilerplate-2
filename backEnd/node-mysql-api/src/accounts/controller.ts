@@ -236,8 +236,11 @@ function _delete(req: any, res: any, next: any) {
 }
 
 function setTokenCookie(res: any, token: any) {
+  const secure = process.env.NODE_ENV === 'production';
   const cookieOptions = {
     httpOnly: true,
+    sameSite: secure ? 'none' : 'lax',
+    secure,
     expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
   };
   res.cookie('refreshToken', token, cookieOptions);

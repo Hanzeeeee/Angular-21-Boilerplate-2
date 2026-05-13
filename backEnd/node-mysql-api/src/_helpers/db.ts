@@ -1,6 +1,5 @@
-import config from '../../config.json';
-import mysql from 'mysql2/promise';
 import { Sequelize } from 'sequelize';
+import config from '../../config';
 import accountModel from '../accounts/account.model';
 import refreshTokenModel from '../accounts/refresh-token.model';
 
@@ -11,12 +10,23 @@ export default db;
 initialize();
 
 async function initialize() {
-  const { host, port, user, password, database } = config.database;
-  const connection = await mysql.createConnection({ host, port, user, password });
+  const { host, port, user, password, database, ssl } = config.db;
 
-  await connection.query(`CREATE DATABASE IF NOT EXISTS \`${database}\`;`);
+  const sequelize = new Sequelize(database, user, password, {
+    host,
+    port,
+    dialect: 'mysql',
+    logging: false,
+    dialectOptions: ssl
+      ? {
+          ssl: {
+            rejectUnauthorized: false
+          }
+        }
+      : undefined
+  });
 
-  const sequelize = new Sequelize(database, user, password, { dialect: 'mysql' });
+  await sequelize.authenticate();
 
   db.Account = accountModel(sequelize);
   db.RefreshToken = refreshTokenModel(sequelize);

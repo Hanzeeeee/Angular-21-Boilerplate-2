@@ -8,10 +8,10 @@
     "module": "node16",
     "lib": ["es2018"],
     "outDir": "./dist",
-    "rootDir": "./src",
+    "rootDir": ".",
     "resolveJsonModule": true,
     "forceConsistentCasingInFileNames": true
   },
-  "include": ["src/**/*.ts"],
+  "include": ["server.ts", "src/**/*.ts"],
   "exclude": ["node_modules"]
 }

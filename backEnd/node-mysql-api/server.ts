@@ -1,24 +1,36 @@
 import express from 'express';
-import bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 
+import config from './config';
 import errorHandler from './src/_middleware/error-handler';
 import accountsController from './src/accounts/controller';
 import swaggerDocs from './src/_helpers/swagger';
 
 const app = express();
+app.set('trust proxy', 1);
 
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(bodyParser.json());
+app.use(express.urlencoded({ extended: false }));
+app.use(express.json());
 app.use(cookieParser());
 
+const allowedOrigins = [config.frontendUrl, 'http://localhost:4200'];
 app.use(
   cors({
-    origin: (origin, callback) => callback(null, true),
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      if (!config.isProduction || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error(`CORS policy blocked origin: ${origin}`));
+    },
     credentials: true
   })
 );
+
+app.get('/', (req, res) => {
+  res.json({ message: 'Backend API is running' });
+});
 
 // api routes
 app.use('/accounts', accountsController);
@@ -30,11 +42,5 @@ app.use('/api-docs', swaggerDocs);
 app.use(errorHandler);
 
 // start server
-const port =
-  process.env.NODE_ENV === 'production'
-    ? process.env.PORT || 80
-    : 4000;
-
-app.listen(port, () =>
-  console.log('Server listening on port ' + port)
-);
+const port = config.port;
+app.listen(port, () => console.log(`Server listening on port ${port}`));
