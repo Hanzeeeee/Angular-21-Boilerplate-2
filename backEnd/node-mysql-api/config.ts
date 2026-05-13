@@ -43,5 +43,6 @@ export default {
       pass: process.env.SMTP_PASSWORD || ''
     }
   },
-  emailFrom: process.env.EMAIL_FROM || 'no-reply@example.com'
+  emailFrom: process.env.EMAIL_FROM || 'no-reply@example.com',
+  sendGridApiKey: process.env.SENDGRID_API_KEY || ''
 };

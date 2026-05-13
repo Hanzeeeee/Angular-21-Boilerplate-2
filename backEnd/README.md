@@ -28,6 +28,7 @@ Render environment variables:
 - `SMTP_SECURE` (true/false)
 - `SMTP_USER`
 - `SMTP_PASSWORD`
+- `SENDGRID_API_KEY`
 - `EMAIL_FROM`
 
 Frontend integration:
