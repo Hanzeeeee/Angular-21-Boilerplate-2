@@ -2,7 +2,7 @@ import express from 'express';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 
-import config from './config.ts';
+import config from './config';
 import errorHandler from './src/_middleware/error-handler';
 import accountsController from './src/accounts/controller';
 import swaggerDocs from './src/_helpers/swagger';
