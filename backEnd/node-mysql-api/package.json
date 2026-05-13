@@ -1,5 +1,5 @@
 {
-  "name": "mysql-api",
+  "name": "backend-api",
   "version": "1.0.0",
   "description": "Node.js + Express backend for Angular frontend",
   "main": "dist/server.js",

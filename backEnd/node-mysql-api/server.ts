@@ -2,7 +2,7 @@ import express from 'express';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 
-import config from './config';
+import config from './config.ts';
 import errorHandler from './src/_middleware/error-handler';
 import accountsController from './src/accounts/controller';
 import swaggerDocs from './src/_helpers/swagger';
@@ -42,5 +42,8 @@ app.use('/api-docs', swaggerDocs);
 app.use(errorHandler);
 
 // start server
-const port = config.port;
-app.listen(port, () => console.log(`Server listening on port ${port}`));
+const port = process.env.PORT || config.port || 3000;
+
+app.listen(port, () => {
+  console.log(`Server listening on port ${port}`);
+});
