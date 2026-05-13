@@ -26,6 +26,8 @@ async function initialize() {
       : undefined
   });
 
+  db.sequelize = sequelize;
+
   await sequelize.authenticate();
 
   db.Account = accountModel(sequelize);

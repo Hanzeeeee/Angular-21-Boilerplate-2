@@ -7,6 +7,7 @@ import validateRequest from '../_middleware/validate-request';
 import authorize from '../_middleware/authorize';
 import Role from '../_helpers/role';
 import accountService from './account.service';
+import config from '../../config';
 
 router.post('/authenticate', authenticateSchema, authenticate);
 router.post('/refresh-token', refreshToken);
@@ -236,10 +237,10 @@ function _delete(req: any, res: any, next: any) {
 }
 
 function setTokenCookie(res: any, token: any) {
-  const secure = process.env.NODE_ENV === 'production';
+  const secure = config.cookieSecure;
   const cookieOptions = {
     httpOnly: true,
-    sameSite: secure ? 'none' : 'lax',
+    sameSite: config.cookieSameSite as 'lax' | 'strict' | 'none',
     secure,
     expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
   };

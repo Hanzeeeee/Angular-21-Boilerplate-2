@@ -1,3 +1,7 @@
+import dotenv from "dotenv";
+import path from "path";
+
+dotenv.config({ path: path.join(__dirname, '../.env') });
 import express from 'express';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
@@ -6,6 +10,7 @@ import config from './config';
 import errorHandler from './src/_middleware/error-handler';
 import accountsController from './src/accounts/controller';
 import swaggerDocs from './src/_helpers/swagger';
+import dbTest from "./src/routes/test-db";
 
 const app = express();
 app.set('trust proxy', 1);
@@ -14,7 +19,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 app.use(cookieParser());
 
-const allowedOrigins = [config.frontendUrl, 'http://localhost:4200'];
+const allowedOrigins = [config.corsOrigin, 'http://localhost:4200'];
 app.use(
   cors({
     origin: (origin, callback) => {
@@ -35,6 +40,9 @@ app.get('/', (req, res) => {
 // api routes
 app.use('/accounts', accountsController);
 
+// db test route
+app.use("/db", dbTest);
+
 // swagger docs routes
 app.use('/api-docs', swaggerDocs);
 
@@ -47,3 +55,4 @@ const port = process.env.PORT || config.port || 3000;
 app.listen(port, () => {
   console.log(`Server listening on port ${port}`);
 });
+

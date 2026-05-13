@@ -22,14 +22,16 @@ export default {
   env: nodeEnv,
   isProduction,
   port: getNumberEnv('PORT', 4000),
-  frontendUrl: process.env.FRONTEND_URL || 'http://localhost:4200',
+  corsOrigin: requireEnv('CORS_ORIGIN', 'http://localhost:4200'),
   jwtSecret: requireEnv('JWT_SECRET', 'SUPER_SECRET_CHANGE_ME'),
+  cookieSecure: process.env.COOKIE_SECURE === 'true',
+  cookieSameSite: process.env.COOKIE_SAMESITE || 'lax',
   db: {
     host: requireEnv('DB_HOST', 'localhost'),
     port: getNumberEnv('DB_PORT', 3306),
     user: requireEnv('DB_USER', 'root'),
     password: requireEnv('DB_PASSWORD', ''),
-    database: requireEnv('DB_DATABASE', 'app_db'),
+    database: requireEnv('DB_NAME', 'app_db'),
     ssl: process.env.DB_SSL === 'true'
   },
   smtp: {
