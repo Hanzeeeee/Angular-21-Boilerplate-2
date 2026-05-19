@@ -114,9 +114,12 @@ async function register(params: any, origin: any) {
 
   await account.save();
 
-  sendVerificationEmail(account, origin).catch((error: any) => {
+  try {
+    await sendVerificationEmail(account, origin);
+  } catch (error: any) {
     console.error('Verification email send failed:', error);
-  });
+    throw 'Registration failed while sending verification email. Please try again later.';
+  }
 
   return { success: true, message: 'Registration successful, please check your email for verification instructions' };
 }

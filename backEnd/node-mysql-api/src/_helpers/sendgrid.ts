@@ -7,7 +7,11 @@ if (!config.sendGridApiKey) {
 
 sgMail.setApiKey(config.sendGridApiKey);
 
-export default async function sendGridEmail({ to, subject, html, from }: any) {
+export default async function sendGridEmail({ to, subject, html, from = config.emailFrom }: any) {
+  if (!from) {
+    throw new Error('EMAIL_FROM is not configured. Please set the sender address in config.');
+  }
+
   const msg = {
     to,
     from,
