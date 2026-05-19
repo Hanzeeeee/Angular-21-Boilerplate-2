@@ -109,14 +109,10 @@ async function register(params: any, origin: any) {
   await account.save();
 
   if (account.verificationToken) {
-    try {
-      await sendVerificationEmail(account, origin);
-    } catch (error) {
-      console.warn('Verification email failed to send; account created without email verification:', error);
-      account.verified = Date.now();
-      account.verificationToken = null;
-      await account.save();
-    }
+    sendVerificationEmail(account, origin)
+      .catch((error: any) => {
+        console.warn('Verification email send failed:', error);
+      });
   }
 
   return { success: true, message: 'Registration successful, please check your email for verification instructions' };

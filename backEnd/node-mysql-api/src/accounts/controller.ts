@@ -36,16 +36,22 @@ function authenticateSchema(req: any, res: any, next: any) {
   validateRequest(req, next, schema);
 }
 
-function authenticate(req: any, res: any, next: any) {
-  const { email, password } = req.body;
-  const ipAddress = req.ip;
-  accountService
-    .authenticate({ email, password, ipAddress })
-    .then(({ refreshToken, ...account }: any) => {
-      setTokenCookie(res, refreshToken);
-      res.json(account);
-    })
-    .catch(next);
+async function authenticate(req: any, res: any, next: any) {
+  try {
+    const { email, password } = req.body;
+    const ipAddress = req.ip;
+    const result: any = await accountService.authenticate({ email, password, ipAddress });
+    const { refreshToken, jwtToken, ...user } = result;
+    setTokenCookie(res, refreshToken);
+    return res.json({
+      success: true,
+      message: 'Login successful',
+      jwtToken,
+      user
+    });
+  } catch (error) {
+    return next(error);
+  }
 }
 
 function refreshToken(req: any, res: any, next: any) {
@@ -98,11 +104,16 @@ function registerSchema(req: any, res: any, next: any) {
   validateRequest(req, next, schema);
 }
 
-function register(req: any, res: any, next: any) {
-  accountService
-    .register(req.body, req.get('origin'))
-    .then((result: any) => res.json({ success: result?.success !== false, message: result?.message || 'Registration successful, please check your email for verification instructions' }))
-    .catch(next);
+async function register(req: any, res: any, next: any) {
+  try {
+    const result: any = await accountService.register(req.body, req.get('origin'));
+    return res.json({
+      success: result?.success !== false,
+      message: result?.message || 'Registration successful, please check your email for verification instructions'
+    });
+  } catch (error) {
+    return next(error);
+  }
 }
 
 function verifyEmailSchema(req: any, res: any, next: any) {
