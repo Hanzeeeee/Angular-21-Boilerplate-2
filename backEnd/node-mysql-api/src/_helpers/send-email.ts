@@ -6,5 +6,10 @@ export default async function sendEmail({ to, subject, html, from = config.email
     throw new Error('SendGrid API key is not configured. Email service unavailable.');
   }
 
-  return await sendGridEmail({ to, subject, html, from });
+  try {
+    return await sendGridEmail({ to, subject, html, from });
+  } catch (error: any) {
+    console.error('Failed to send email to:', to, 'subject:', subject, 'error:', error?.message || error);
+    throw error;
+  }
 }

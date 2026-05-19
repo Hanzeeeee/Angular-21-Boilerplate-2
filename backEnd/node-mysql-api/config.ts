@@ -39,15 +39,6 @@ export default {
     database: requireEnv('DB_NAME', 'app_db'),
     ssl: process.env.DB_SSL === 'true'
   },
-  smtp: {
-    host: process.env.SMTP_HOST || '',
-    port: getNumberEnv('SMTP_PORT', 587),
-    secure: process.env.SMTP_SECURE === 'true',
-    auth: {
-      user: process.env.SMTP_USER || '',
-      pass: process.env.SMTP_PASSWORD || ''
-    }
-  },
   emailFrom: process.env.EMAIL_FROM || 'no-reply@example.com',
   sendGridApiKey: process.env.SENDGRID_API_KEY || ''
 };
