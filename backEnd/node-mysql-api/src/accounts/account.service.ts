@@ -8,6 +8,10 @@ import sendEmail from '../_helpers/send-email';
 import db from '../_helpers/db';
 import Role from '../_helpers/role';
 
+function normalizeEmail(email: any) {
+  return email?.toString().trim().toLowerCase();
+}
+
 export default {
   authenticate,
   refreshToken,
@@ -26,9 +30,9 @@ export default {
 
 
 async function authenticate({ email, password, ipAddress }: any) {
-  const normalizedEmail = email?.toString().trim().toLowerCase();
+  const normalizedEmail = normalizeEmail(email);
 
-  if (!normalizedEmail) {
+  if (!normalizedEmail || !password) {
     throw 'Email or password is incorrect';
   }
 
@@ -36,11 +40,7 @@ async function authenticate({ email, password, ipAddress }: any) {
     where: { email: normalizedEmail }
   });
 
-  if (!account) {
-    throw 'User not found';
-  }
-
-  if (!account.isVerified || !(await bcrypt.compare(password, account.passwordHash))) {
+  if (!account || !account.isVerified || !(await bcrypt.compare(password, account.passwordHash))) {
     throw 'Email or password is incorrect';
   }
 
@@ -88,7 +88,7 @@ async function revokeToken({ token, ipAddress }: any) {
 }
 
 async function register(params: any, origin: any) {
-  const normalizedEmail = params.email?.toString().trim().toLowerCase();
+  const normalizedEmail = normalizeEmail(params.email);
   if (!normalizedEmail) {
     throw 'Email is required';
   }
@@ -103,14 +103,18 @@ async function register(params: any, origin: any) {
   }
 
   const account = new db.Account({
-    ...params,
-    email: normalizedEmail
+    title: params.title,
+    firstName: params.firstName,
+    lastName: params.lastName,
+    email: normalizedEmail,
+    acceptTerms: params.acceptTerms,
+    role: params.role,
+    verificationToken: randomTokenString(),
+    passwordHash: await hash(params.password)
   });
 
   const isFirstAccount = (await db.Account.count()) === 0;
   account.role = isFirstAccount ? Role.Admin : Role.User;
-  account.passwordHash = await hash(params.password);
-  account.verificationToken = randomTokenString();
 
   await account.save();
 
@@ -130,6 +134,9 @@ async function verifyEmail({ token }: any) {
   });
 
   if (!account) throw 'Verification failed';
+  if (account.verified) {
+    return { success: true, message: 'Email is already verified' };
+  }
 
   account.verified = Date.now();
   account.verificationToken = null;
@@ -140,7 +147,7 @@ async function verifyEmail({ token }: any) {
 }
 
 async function forgotPassword({ email }: any, origin: any) {
-  const normalizedEmail = email?.toString().trim().toLowerCase();
+  const normalizedEmail = normalizeEmail(email);
   const account = await db.Account.findOne({ where: { email: normalizedEmail } });
 
   if (!account) {
@@ -189,6 +196,7 @@ async function resetPassword({ token, password }: any) {
   account.passwordHash = await hash(password);
   account.passwordReset = Date.now();
   account.resetToken = null;
+  account.resetTokenExpires = null;
 
   await account.save();
 }
@@ -206,14 +214,17 @@ async function getById(id: any) {
 }
 
 async function create(params: any) {
-  if (await db.Account.findOne({ where: { email: params.email } })) {
-    throw 'Email "' + params.email + '" is already registered';
+  const normalizedEmail = normalizeEmail(params.email);
+  if (await db.Account.findOne({ where: { email: normalizedEmail } })) {
+    throw 'Email "' + normalizedEmail + '" is already registered';
   }
 
-  const account = new db.Account(params);
-
-  account.verified = Date.now();
-  account.passwordHash = await hash(params.password);
+  const account = new db.Account({
+    ...params,
+    email: normalizedEmail,
+    verified: Date.now(),
+    passwordHash: await hash(params.password)
+  });
 
   await account.save();
 
@@ -223,20 +234,22 @@ async function create(params: any) {
 async function update(id: any, params: any) {
   const account = await getAccount(id);
 
-  if (
-    params.email &&
-    account.email !== params.email &&
-    (await db.Account.findOne({ where: { email: params.email } }))
-  ) {
-    throw 'Email "' + params.email + '" is already taken';
+  if (params.email) {
+    params.email = normalizeEmail(params.email);
+
+    if (account.email !== params.email && (await db.Account.findOne({ where: { email: params.email } }))) {
+      throw 'Email "' + params.email + '" is already taken';
+    }
   }
 
   if (params.password) {
     params.passwordHash = await hash(params.password);
   }
 
-  Object.assign(account, params);
+  delete params.password;
+  delete params.confirmPassword;
 
+  Object.assign(account, params);
   account.updated = Date.now();
 
   await account.save();

@@ -57,14 +57,13 @@ const port = process.env.PORT || config.port || 3000;
 async function startServer() {
   try {
     await db.initialize();
-    console.log('Database initialized successfully');
   } catch (error) {
     console.error('Database initialization failed:', error);
     process.exit(1);
   }
 
   app.listen(port, () => {
-    console.log(`Server listening on port ${port}`);
+    // server started
   });
 }
 

@@ -129,7 +129,7 @@ function verifyEmailQuerySchema(req: any, res: any, next: any) {
   const schema = Joi.object({
     token: Joi.string().required()
   });
-  validateRequest(req, next, schema);
+  validateRequest(req, next, schema, 'query');
 }
 
 async function verifyEmailQuery(req: any, res: any, next: any) {
