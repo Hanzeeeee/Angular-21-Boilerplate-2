@@ -28,7 +28,7 @@ export default {
   isProduction,
   port: getNumberEnv('PORT', 4000),
   corsOrigin: process.env.CORS_ORIGIN || (!isProduction ? 'http://localhost:4200' : ''),
-  jwtSecret: requireEnv('JWT_SECRET', 'SUPER_SECRET_CHANGE_ME'),
+  jwtSecret: requireEnv('JWT_SECRET'),
   cookieSecure: process.env.COOKIE_SECURE === 'true' || isProduction,
   cookieSameSite: (process.env.COOKIE_SAMESITE as any) || (isProduction ? 'none' : 'lax'),
   db: {
@@ -39,6 +39,6 @@ export default {
     database: requireEnv('DB_NAME', 'app_db'),
     ssl: process.env.DB_SSL === 'true'
   },
-  emailFrom: process.env.EMAIL_FROM || 'no-reply@example.com',
-  sendGridApiKey: process.env.SENDGRID_API_KEY || ''
+  emailFrom: requireEnv('EMAIL_FROM'),
+  sendGridApiKey: requireEnv('SENDGRID_API_KEY')
 };
