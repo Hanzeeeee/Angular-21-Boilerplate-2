@@ -134,14 +134,31 @@ async function verifyEmail({ token }: any) {
 async function forgotPassword({ email }: any, origin: any) {
   const account = await db.Account.findOne({ where: { email } });
 
-  if (!account) return;
+  if (!account) {
+    return {
+      success: true,
+      message: 'Please check your email for password reset instructions'
+    };
+  }
 
   account.resetToken = randomTokenString();
   account.resetTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
   await account.save();
 
-  await sendPasswordResetEmail(account, origin);
+  try {
+    await sendPasswordResetEmail(account, origin);
+    return {
+      success: true,
+      message: 'Please check your email for password reset instructions'
+    };
+  } catch (error: any) {
+    console.error('Failed to send password reset email:', error);
+    return {
+      success: false,
+      message: 'Unable to send password reset email. Please try again later.'
+    };
+  }
 }
 
 async function validateResetToken({ token }: any) {
