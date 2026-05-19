@@ -108,7 +108,8 @@ function registerSchema(req: any, res: any, next: any) {
 
 async function register(req: any, res: any, next: any) {
   try {
-    const result: any = await accountService.register(req.body, req.get('origin'));
+    const backendOrigin = `${req.protocol}://${req.get('host')}`;
+    const result: any = await accountService.register(req.body, backendOrigin);
     return res.json({
       success: result?.success !== false,
       message: result?.message || 'Registration successful, please check your email for verification instructions'

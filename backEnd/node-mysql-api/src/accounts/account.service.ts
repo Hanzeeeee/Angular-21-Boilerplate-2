@@ -129,19 +129,40 @@ async function register(params: any, origin: any) {
 }
 
 async function verifyEmail({ token }: any) {
+  console.log('verifyEmail token received:', token);
+
   const account = await db.Account.findOne({
     where: { verificationToken: token }
   });
 
-  if (!account) throw 'Verification failed';
+  if (!account) {
+    console.error('verifyEmail failed: no account found for token', token);
+    throw 'Verification failed';
+  }
+
+  console.log('verifyEmail user found:', {
+    id: account.id,
+    email: account.email,
+    verified: account.verified,
+    verificationToken: account.verificationToken
+  });
+
   if (account.verified) {
+    console.log('verifyEmail already verified:', { id: account.id, email: account.email });
     return { success: true, message: 'Email is already verified' };
   }
 
-  account.verified = Date.now();
+  account.verified = new Date();
   account.verificationToken = null;
 
   await account.save();
+
+  console.log('verifyEmail persisted update:', {
+    id: account.id,
+    email: account.email,
+    verified: account.verified,
+    verificationToken: account.verificationToken
+  });
 
   return { success: true, message: 'Verification successful, you can now login' };
 }
@@ -333,7 +354,7 @@ async function sendVerificationEmail(account: any, origin: any) {
   let message;
 
   if (origin) {
-    const verifyUrl = `${origin}/verify-email?token=${account.verificationToken}`;
+    const verifyUrl = `${origin}/accounts/verify-email?token=${account.verificationToken}`;
 
     message = `
       <p>Please click the below link to verify your email address:</p>
