@@ -54,16 +54,16 @@ async function authenticate(req: any, res: any, next: any) {
   }
 }
 
-function refreshToken(req: any, res: any, next: any) {
-  const token = req.cookies.refreshToken || req.body.token;
-  const ipAddress = req.ip;
-  accountService
-    .refreshToken({ token, ipAddress })
-    .then(({ refreshToken, ...account }: any) => {
-      setTokenCookie(res, refreshToken);
-      res.json(account);
-    })
-    .catch(next);
+async function refreshToken(req: any, res: any, next: any) {
+  try {
+    const token = req.cookies.refreshToken || req.body.token;
+    const ipAddress = req.ip;
+    const result: any = await accountService.refreshToken({ token, ipAddress });
+    setTokenCookie(res, result.refreshToken);
+    return res.json({ success: true, message: 'Token refreshed', user: result });
+  } catch (error) {
+    next(error);
+  }
 }
 
 function revokeTokenSchema(req: any, res: any, next: any) {
@@ -73,22 +73,24 @@ function revokeTokenSchema(req: any, res: any, next: any) {
   validateRequest(req, next, schema);
 }
 
-function revokeToken(req: any, res: any, next: any) {
-  const token = req.body.token || req.cookies.refreshToken;
-  const ipAddress = req.ip;
+async function revokeToken(req: any, res: any, next: any) {
+  try {
+    const token = req.body.token || req.cookies.refreshToken;
+    const ipAddress = req.ip;
 
-  if (!token) {
-    return res.status(400).json({ message: 'Token is required' });
+    if (!token) {
+      return res.status(400).json({ success: false, message: 'Token is required' });
+    }
+
+    if (!req.auth.ownsToken(token) && req.auth.role !== Role.Admin) {
+      return res.status(401).json({ success: false, message: 'Unauthorized' });
+    }
+
+    await accountService.revokeToken({ token, ipAddress });
+    return res.json({ success: true, message: 'Token revoked' });
+  } catch (error) {
+    next(error);
   }
-
-  if (!req.auth.ownsToken(token) && req.auth.role !== Role.Admin) {
-    return res.status(401).json({ message: 'Unauthorized' });
-  }
-
-  accountService
-    .revokeToken({ token, ipAddress })
-    .then(() => res.json({ message: 'Token revoked' }))
-    .catch(next);
 }
 
 function registerSchema(req: any, res: any, next: any) {
@@ -112,7 +114,7 @@ async function register(req: any, res: any, next: any) {
       message: result?.message || 'Registration successful, please check your email for verification instructions'
     });
   } catch (error) {
-    return next(error);
+    next(error);
   }
 }
 
@@ -130,18 +132,22 @@ function verifyEmailQuerySchema(req: any, res: any, next: any) {
   validateRequest(req, next, schema);
 }
 
-function verifyEmailQuery(req: any, res: any, next: any) {
-  accountService
-    .verifyEmail(req.query)
-    .then((result: any) => res.json({ success: true, message: result?.message || 'Verification successful, you can now login' }))
-    .catch(next);
+async function verifyEmailQuery(req: any, res: any, next: any) {
+  try {
+    const result: any = await accountService.verifyEmail(req.query);
+    return res.json({ success: true, message: result?.message || 'Verification successful, you can now login' });
+  } catch (error) {
+    next(error);
+  }
 }
 
-function verifyEmail(req: any, res: any, next: any) {
-  accountService
-    .verifyEmail(req.body)
-    .then((result: any) => res.json({ success: true, message: result?.message || 'Verification successful, you can now login' }))
-    .catch(next);
+async function verifyEmail(req: any, res: any, next: any) {
+  try {
+    const result: any = await accountService.verifyEmail(req.body);
+    return res.json({ success: true, message: result?.message || 'Verification successful, you can now login' });
+  } catch (error) {
+    next(error);
+  }
 }
 
 function forgotPasswordSchema(req: any, res: any, next: any) {
@@ -151,16 +157,16 @@ function forgotPasswordSchema(req: any, res: any, next: any) {
   validateRequest(req, next, schema);
 }
 
-function forgotPassword(req: any, res: any, next: any) {
-  accountService
-    .forgotPassword(req.body, req.get('origin'))
-    .then((result: any) => {
-      res.json({
-        success: result?.success !== false,
-        message: result?.message || 'Please check your email for password reset instructions'
-      });
-    })
-    .catch(next);
+async function forgotPassword(req: any, res: any, next: any) {
+  try {
+    const result: any = await accountService.forgotPassword(req.body, req.get('origin'));
+    return res.json({
+      success: result?.success !== false,
+      message: result?.message || 'Please check your email for password reset instructions'
+    });
+  } catch (error) {
+    next(error);
+  }
 }
 
 function validateResetTokenSchema(req: any, res: any, next: any) {
@@ -170,11 +176,13 @@ function validateResetTokenSchema(req: any, res: any, next: any) {
   validateRequest(req, next, schema);
 }
 
-function validateResetToken(req: any, res: any, next: any) {
-  accountService
-    .validateResetToken(req.body)
-    .then(() => res.json({ message: 'Token is valid' }))
-    .catch(next);
+async function validateResetToken(req: any, res: any, next: any) {
+  try {
+    await accountService.validateResetToken(req.body);
+    return res.json({ success: true, message: 'Token is valid' });
+  } catch (error) {
+    next(error);
+  }
 }
 
 function resetPasswordSchema(req: any, res: any, next: any) {
@@ -186,11 +194,13 @@ function resetPasswordSchema(req: any, res: any, next: any) {
   validateRequest(req, next, schema);
 }
 
-function resetPassword(req: any, res: any, next: any) {
-  accountService
-    .resetPassword(req.body)
-    .then(() => res.json({ message: 'Password reset successful, you can now login' }))
-    .catch(next);
+async function resetPassword(req: any, res: any, next: any) {
+  try {
+    await accountService.resetPassword(req.body);
+    return res.json({ success: true, message: 'Password reset successful, you can now login' });
+  } catch (error) {
+    next(error);
+  }
 }
 
 function getAll(req: any, res: any, next: any) {

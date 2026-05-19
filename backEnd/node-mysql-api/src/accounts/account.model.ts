@@ -23,7 +23,7 @@ export default function model(sequelize: any) {
     isVerified: {
       type: DataTypes.VIRTUAL,
       get() {
-        return !!(this.verified || this.passwordReset);
+        return !!this.verified;
       }
     }
   };
