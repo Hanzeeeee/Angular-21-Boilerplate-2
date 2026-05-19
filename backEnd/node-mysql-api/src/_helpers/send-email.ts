@@ -8,7 +8,8 @@ export default async function sendEmail({ to, subject, html, from = config.email
   }
 
   if (!config.smtp.host) {
-    throw new Error('Email transport is not configured. Provide SENDGRID_API_KEY or SMTP settings.');
+    console.warn('Email transport is not configured. Skipping email send for', to);
+    return;
   }
 
   const transporter = nodemailer.createTransport({

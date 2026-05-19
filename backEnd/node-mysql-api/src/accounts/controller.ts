@@ -10,6 +10,7 @@ import accountService from './account.service';
 import config from '../../config';
 
 router.post('/authenticate', authenticateSchema, authenticate);
+router.post('/login', authenticateSchema, authenticate);
 router.post('/refresh-token', refreshToken);
 router.post('/revoke-token', authorize(), revokeTokenSchema, revokeToken);
 router.post('/register', registerSchema, register);

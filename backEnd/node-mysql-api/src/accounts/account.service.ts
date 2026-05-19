@@ -83,7 +83,12 @@ async function revokeToken({ token, ipAddress }: any) {
 
 async function register(params: any, origin: any) {
   if (await db.Account.findOne({ where: { email: params.email } })) {
-    return await sendAlreadyRegisteredEmail(params.email, origin);
+    try {
+      await sendAlreadyRegisteredEmail(params.email, origin);
+    } catch (error) {
+      console.warn('Skipped already-registered email send:', error);
+    }
+    return;
   }
 
   const account = new db.Account(params);
@@ -91,12 +96,26 @@ async function register(params: any, origin: any) {
   const isFirstAccount = (await db.Account.count()) === 0;
   account.role = isFirstAccount ? Role.Admin : Role.User;
 
-  account.verificationToken = randomTokenString();
   account.passwordHash = await hash(params.password);
+
+  if (config.sendGridApiKey || config.smtp.host) {
+    account.verificationToken = randomTokenString();
+  } else {
+    account.verified = Date.now();
+  }
 
   await account.save();
 
-  await sendVerificationEmail(account, origin);
+  if (account.verificationToken) {
+    try {
+      await sendVerificationEmail(account, origin);
+    } catch (error) {
+      console.warn('Verification email failed to send; account created without email verification:', error);
+      account.verified = Date.now();
+      account.verificationToken = null;
+      await account.save();
+    }
+  }
 }
 
 async function verifyEmail({ token }: any) {

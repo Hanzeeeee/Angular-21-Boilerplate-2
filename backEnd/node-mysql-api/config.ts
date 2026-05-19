@@ -6,11 +6,16 @@ const nodeEnv = process.env.NODE_ENV || 'development';
 const isProduction = nodeEnv === 'production';
 
 function requireEnv(key: string, fallback?: string) {
-  const value = process.env[key] ?? fallback;
-  if (isProduction && !value) {
-    throw new Error(`Missing required environment variable: ${key}`);
+  const value = process.env[key];
+  if (value !== undefined) {
+    return value;
   }
-  return value as string;
+
+  if (!isProduction && fallback !== undefined) {
+    return fallback;
+  }
+
+  throw new Error(`Missing required environment variable: ${key}`);
 }
 
 function getNumberEnv(key: string, fallback: number) {
@@ -22,10 +27,10 @@ export default {
   env: nodeEnv,
   isProduction,
   port: getNumberEnv('PORT', 4000),
-  corsOrigin: requireEnv('CORS_ORIGIN', 'http://localhost:4200'),
+  corsOrigin: process.env.CORS_ORIGIN || (!isProduction ? 'http://localhost:4200' : ''),
   jwtSecret: requireEnv('JWT_SECRET', 'SUPER_SECRET_CHANGE_ME'),
-  cookieSecure: process.env.COOKIE_SECURE === 'true',
-  cookieSameSite: process.env.COOKIE_SAMESITE || 'lax',
+  cookieSecure: process.env.COOKIE_SECURE === 'true' || isProduction,
+  cookieSameSite: (process.env.COOKIE_SAMESITE as any) || (isProduction ? 'none' : 'lax'),
   db: {
     host: requireEnv('DB_HOST', 'localhost'),
     port: getNumberEnv('DB_PORT', 3306),

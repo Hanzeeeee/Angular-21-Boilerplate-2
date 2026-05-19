@@ -7,6 +7,7 @@ import cookieParser from 'cookie-parser';
 import cors from 'cors';
 
 import config from './config';
+import db from './src/_helpers/db';
 import errorHandler from './src/_middleware/error-handler';
 import accountsController from './src/accounts/controller';
 import swaggerDocs from './src/_helpers/swagger';
@@ -19,12 +20,13 @@ app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 app.use(cookieParser());
 
-const allowedOrigins = [config.corsOrigin, 'http://localhost:4200'];
+const allowedOrigins = [config.corsOrigin, 'http://localhost:4200'].filter(Boolean);
 app.use(
   cors({
     origin: (origin, callback) => {
       if (!origin) return callback(null, true);
-      if (!config.isProduction || allowedOrigins.includes(origin)) {
+      if (!config.isProduction) return callback(null, true);
+      if (!config.corsOrigin || allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
       return callback(new Error(`CORS policy blocked origin: ${origin}`));
@@ -52,7 +54,19 @@ app.use(errorHandler);
 // start server
 const port = process.env.PORT || config.port || 3000;
 
-app.listen(port, () => {
-  console.log(`Server listening on port ${port}`);
-});
+async function startServer() {
+  try {
+    await db.initialize();
+    console.log('Database initialized successfully');
+  } catch (error) {
+    console.error('Database initialization failed:', error);
+    process.exit(1);
+  }
+
+  app.listen(port, () => {
+    console.log(`Server listening on port ${port}`);
+  });
+}
+
+startServer();
 

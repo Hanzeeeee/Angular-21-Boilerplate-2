@@ -3,11 +3,11 @@ import config from '../../config';
 import accountModel from '../accounts/account.model';
 import refreshTokenModel from '../accounts/refresh-token.model';
 
-const db: any = {};
+const db: any = {
+  initialize
+};
 
 export default db;
-
-initialize();
 
 async function initialize() {
   const { host, port, user, password, database, ssl } = config.db;
