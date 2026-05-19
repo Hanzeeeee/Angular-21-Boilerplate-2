@@ -88,38 +88,35 @@ async function revokeToken({ token, ipAddress }: any) {
 }
 
 async function register(params: any, origin: any) {
-  // If email already exists, send the "already registered" email and
-  // throw a user-friendly string (the error handler maps strings to 400).
-  if (await db.Account.findOne({ where: { email: params.email } })) {
-    try {
-      await sendAlreadyRegisteredEmail(params.email, origin);
-    } catch (error) {
-      console.warn('Skipped already-registered email send:', error);
-    }
-    throw 'Email "' + params.email + '" is already registered';
+  const normalizedEmail = params.email?.toString().trim().toLowerCase();
+  if (!normalizedEmail) {
+    throw 'Email is required';
   }
 
-  const account = new db.Account(params);
+  if (await db.Account.findOne({ where: { email: normalizedEmail } })) {
+    try {
+      await sendAlreadyRegisteredEmail(normalizedEmail, origin);
+    } catch (error: any) {
+      console.error('Already registered email send failed:', error);
+    }
+    throw `Email "${normalizedEmail}" is already registered`;
+  }
+
+  const account = new db.Account({
+    ...params,
+    email: normalizedEmail
+  });
 
   const isFirstAccount = (await db.Account.count()) === 0;
   account.role = isFirstAccount ? Role.Admin : Role.User;
-
   account.passwordHash = await hash(params.password);
-
-  if (config.sendGridApiKey || config.smtp.host) {
-    account.verificationToken = randomTokenString();
-  } else {
-    account.verified = Date.now();
-  }
+  account.verificationToken = randomTokenString();
 
   await account.save();
 
-  if (account.verificationToken) {
-    sendVerificationEmail(account, origin)
-      .catch((error: any) => {
-        console.warn('Verification email send failed:', error);
-      });
-  }
+  sendVerificationEmail(account, origin).catch((error: any) => {
+    console.error('Verification email send failed:', error);
+  });
 
   return { success: true, message: 'Registration successful, please check your email for verification instructions' };
 }
@@ -135,10 +132,13 @@ async function verifyEmail({ token }: any) {
   account.verificationToken = null;
 
   await account.save();
+
+  return { success: true, message: 'Verification successful, you can now login' };
 }
 
 async function forgotPassword({ email }: any, origin: any) {
-  const account = await db.Account.findOne({ where: { email } });
+  const normalizedEmail = email?.toString().trim().toLowerCase();
+  const account = await db.Account.findOne({ where: { email: normalizedEmail } });
 
   if (!account) {
     return {
@@ -256,11 +256,6 @@ async function getAccount(id: any) {
 
 async function getRefreshToken(token: any) {
   const refreshToken = await db.RefreshToken.findOne({ where: { token } });
-
-  console.log('Token found:', !!refreshToken);
-  console.log('isActive:', refreshToken?.isActive);
-  console.log('isExpired:', refreshToken?.isExpired);
-  console.log('revoked:', refreshToken?.revoked);
 
   if (!refreshToken || !refreshToken.isActive) throw 'Invalid token';
 

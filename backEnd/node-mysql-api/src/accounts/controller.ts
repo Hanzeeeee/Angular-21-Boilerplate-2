@@ -133,14 +133,14 @@ function verifyEmailQuerySchema(req: any, res: any, next: any) {
 function verifyEmailQuery(req: any, res: any, next: any) {
   accountService
     .verifyEmail(req.query)
-    .then(() => res.json({ message: 'Verification successful, you can now login' }))
+    .then((result: any) => res.json({ success: true, message: result?.message || 'Verification successful, you can now login' }))
     .catch(next);
 }
 
 function verifyEmail(req: any, res: any, next: any) {
   accountService
     .verifyEmail(req.body)
-    .then(() => res.json({ message: 'Verification successful, you can now login' }))
+    .then((result: any) => res.json({ success: true, message: result?.message || 'Verification successful, you can now login' }))
     .catch(next);
 }
 
