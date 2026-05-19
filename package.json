@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@sendgrid/mail": "^8.1.6",
     "mysql2": "^3.22.3"
   }
 }
