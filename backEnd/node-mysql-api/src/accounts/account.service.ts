@@ -26,15 +26,21 @@ export default {
 
 
 async function authenticate({ email, password, ipAddress }: any) {
+  const normalizedEmail = email?.toString().trim().toLowerCase();
+
+  if (!normalizedEmail) {
+    throw 'Email or password is incorrect';
+  }
+
   const account = await db.Account.scope('withHash').findOne({
-    where: { email }
+    where: { email: normalizedEmail }
   });
 
-  if (
-    !account ||
-    !account.isVerified ||
-    !(await bcrypt.compare(password, account.passwordHash))
-  ) {
+  if (!account) {
+    throw 'User not found';
+  }
+
+  if (!account.isVerified || !(await bcrypt.compare(password, account.passwordHash))) {
     throw 'Email or password is incorrect';
   }
 
