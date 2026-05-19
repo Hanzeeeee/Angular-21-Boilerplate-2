@@ -135,7 +135,8 @@ function verifyEmailQuerySchema(req: any, res: any, next: any) {
 
 async function verifyEmailQuery(req: any, res: any, next: any) {
   try {
-    const result: any = await accountService.verifyEmail(req.query);
+    // Use validated query data (from validate-request middleware)
+    const result: any = await accountService.verifyEmail(req.validatedQuery);
     return res.json({ success: true, message: result?.message || 'Verification successful, you can now login' });
   } catch (error) {
     next(error);

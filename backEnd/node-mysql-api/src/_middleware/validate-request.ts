@@ -16,7 +16,9 @@ function validateRequest(req: any, next: any, schema: any, source = 'body') {
   }
 
   if (source === 'query') {
-    req.query = value;
+    // Don't reassign req.query - it's read-only in Express
+    // Store validated query params in a custom property instead
+    req.validatedQuery = value;
   } else {
     req.body = value;
   }
