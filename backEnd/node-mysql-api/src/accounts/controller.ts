@@ -18,6 +18,8 @@ router.get('/verify-email', verifyEmailQuerySchema, verifyEmailQuery);
 router.post('/verify-email', verifyEmailSchema, verifyEmail);
 router.post('/forgot-password', forgotPasswordSchema, forgotPassword);
 router.post('/validate-reset-token', validateResetTokenSchema, validateResetToken);
+router.get('/validate-reset-token', validateResetTokenSchema, validateResetToken);
+router.get('/validate-reset-token/:token', validateResetTokenSchema, validateResetToken);
 router.post('/reset-password', resetPasswordSchema, resetPassword);
 
 router.get('/', authorize(Role.Admin), getAll);
@@ -175,15 +177,23 @@ function validateResetTokenSchema(req: any, res: any, next: any) {
   const schema = Joi.object({
     token: Joi.string().required()
   });
+
+  const token = req.body?.token || req.query?.token || req.params?.token;
+  if (!token || typeof token !== 'string') {
+    return next('Validation error: token is required');
+  }
+
+  req.body = { ...req.body, token };
   validateRequest(req, next, schema);
 }
 
 async function validateResetToken(req: any, res: any, next: any) {
   try {
-    await accountService.validateResetToken(req.body);
+    await accountService.validateResetToken({ token: req.body.token });
     return res.json({ success: true, message: 'Token is valid' });
   } catch (error) {
-    next(error);
+    const message = typeof error === 'string' ? error : error?.message || 'Invalid or expired token';
+    return res.status(400).json({ success: false, message });
   }
 }
 
