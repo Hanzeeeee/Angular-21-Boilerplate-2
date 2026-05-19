@@ -82,13 +82,15 @@ async function revokeToken({ token, ipAddress }: any) {
 }
 
 async function register(params: any, origin: any) {
+  // If email already exists, send the "already registered" email and
+  // throw a user-friendly string (the error handler maps strings to 400).
   if (await db.Account.findOne({ where: { email: params.email } })) {
     try {
       await sendAlreadyRegisteredEmail(params.email, origin);
     } catch (error) {
       console.warn('Skipped already-registered email send:', error);
     }
-    return;
+    throw 'Email "' + params.email + '" is already registered';
   }
 
   const account = new db.Account(params);
@@ -116,6 +118,8 @@ async function register(params: any, origin: any) {
       await account.save();
     }
   }
+
+  return { success: true, message: 'Registration successful, please check your email for verification instructions' };
 }
 
 async function verifyEmail({ token }: any) {
