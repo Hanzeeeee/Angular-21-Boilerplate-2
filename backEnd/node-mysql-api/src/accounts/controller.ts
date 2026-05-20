@@ -7,6 +7,7 @@ import validateRequest from '../_middleware/validate-request';
 import authorize from '../_middleware/authorize';
 import Role from '../_helpers/role';
 import accountService from './account.service';
+import { validateResetToken, validateResetTokenSchema, resetPassword, resetPasswordSchema } from './reset-password';
 import config from '../../config';
 
 /**
@@ -434,81 +435,6 @@ async function forgotPassword(req: any, res: any, next: any) {
     });
   } catch (error) {
     next(error);
-  }
-}
-
-function getTokenFromRequest(req: any) {
-  const token = req.body?.token || req.query?.token || req.params?.token;
-  return typeof token === 'string' ? token.trim() : undefined;
-}
-
-function validateResetTokenSchema(req: any, res: any, next: any) {
-  const schema = Joi.object({
-    token: Joi.string().required()
-  });
-
-  const token = getTokenFromRequest(req);
-  if (!token) {
-    return next('Validation error: token is required');
-  }
-
-  req.body = { ...req.body, token };
-  validateRequest(req, next, schema);
-}
-
-async function validateResetToken(req: any, res: any, next: any) {
-  const token = req.body?.token || getTokenFromRequest(req);
-  console.log('[validateResetToken] Token received:', token);
-
-  try {
-    if (!token) {
-      console.error('[validateResetToken] FAIL: Token is missing');
-      return res.status(400).json({ success: false, message: 'Token is required' });
-    }
-
-    const account = await accountService.validateResetToken({ token });
-    console.log('[validateResetToken] SUCCESS: Token validated for user:', { id: account.id, email: account.email });
-    return res.json({ success: true, message: 'Token is valid' });
-  } catch (error) {
-    const message = typeof error === 'string' ? error : error?.message || 'Invalid or expired token';
-    console.error('[validateResetToken] FAIL:', { token, message, error });
-    return res.status(400).json({ success: false, message });
-  }
-}
-
-function resetPasswordSchema(req: any, res: any, next: any) {
-  const schema = Joi.object({
-    token: Joi.string().required(),
-    password: Joi.string().min(6).required(),
-    confirmPassword: Joi.string().valid(Joi.ref('password')).required()
-  });
-
-  const token = getTokenFromRequest(req);
-  if (token) {
-    req.body = { ...req.body, token };
-  }
-
-  validateRequest(req, next, schema);
-}
-
-async function resetPassword(req: any, res: any, next: any) {
-  const token = req.body?.token || getTokenFromRequest(req);
-  const password = req.body?.password;
-  console.log('[resetPassword] Token and password received');
-
-  try {
-    if (!token || !password) {
-      console.error('[resetPassword] FAIL: Token or password is missing', { hasToken: !!token, hasPassword: !!password });
-      return res.status(400).json({ success: false, message: 'Token and password are required' });
-    }
-
-    const result = await accountService.resetPassword({ token, password });
-    console.log('[resetPassword] SUCCESS: Password reset for user:', { email: result.email });
-    return res.json({ success: true, message: 'Password reset successful, you can now login' });
-  } catch (error) {
-    const message = typeof error === 'string' ? error : error?.message || 'Password reset failed';
-    console.error('[resetPassword] FAIL: Password reset failed', { message, error });
-    return res.status(400).json({ success: false, message });
   }
 }
 
