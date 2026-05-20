@@ -202,28 +202,71 @@ async function forgotPassword({ email }: any, origin: any) {
   }
 }
 
+function normalizeToken(token: any) {
+  return token?.toString().trim();
+}
+
 async function validateResetToken({ token }: any) {
+  const normalizedToken = normalizeToken(token);
+  console.log('validateResetToken token received:', normalizedToken);
+
+  if (!normalizedToken) {
+    console.error('validateResetToken failed: token is missing');
+    throw 'Invalid token';
+  }
+
   const account = await db.Account.findOne({
     where: {
-      resetToken: token,
+      resetToken: normalizedToken,
       resetTokenExpires: { [Op.gt]: Date.now() }
     }
   });
 
-  if (!account) throw 'Invalid token';
+  if (!account) {
+    console.error('validateResetToken failed: no account found or token expired', normalizedToken);
+    throw 'Invalid or expired token';
+  }
+
+  console.log('validateResetToken user found:', {
+    id: account.id,
+    email: account.email,
+    resetTokenExpires: account.resetTokenExpires
+  });
 
   return account;
 }
 
 async function resetPassword({ token, password }: any) {
-  const account = await validateResetToken({ token });
+  const normalizedToken = normalizeToken(token);
+  console.log('[resetPassword] Processing token:', normalizedToken?.substring(0, 10) + '...');
 
-  account.passwordHash = await hash(password);
+  // Validate token and get account
+  const account = await validateResetToken({ token: normalizedToken });
+
+  if (!account) {
+    throw 'Account not found for this reset token';
+  }
+
+  // Hash new password
+  const hashedPassword = await hash(password);
+  console.log('[resetPassword] Password hashed');
+
+  // Update account with new password and clear reset token
+  account.passwordHash = hashedPassword;
   account.passwordReset = Date.now();
   account.resetToken = null;
   account.resetTokenExpires = null;
 
   await account.save();
+
+  console.log('[resetPassword] Account updated successfully:', {
+    id: account.id,
+    email: account.email,
+    passwordReset: account.passwordReset
+  });
+
+  // Return basic account details
+  return basicDetails(account);
 }
 
 async function getAll() {
