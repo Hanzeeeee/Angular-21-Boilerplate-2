@@ -218,8 +218,13 @@ async function validateResetToken({ token }: any) {
   const account = await db.Account.findOne({
     where: {
       resetToken: normalizedToken,
-      resetTokenExpires: { [Op.gt]: Date.now() }
+      resetTokenExpires: { [Op.gt]: new Date() }
     }
+  });
+
+  console.log('validateResetToken query result:', {
+    token: normalizedToken,
+    found: !!account
   });
 
   if (!account) {
