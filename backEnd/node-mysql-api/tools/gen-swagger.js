@@ -32,3 +32,17 @@ try {
   console.error('ERROR_GENERATING_SPEC', err && err.message ? err.message : err);
   process.exit(1);
 }
+
+// merge static YAML paths if present
+try {
+  const YAML = require('yamljs');
+  const yamlSpec = YAML.load(path.join(__dirname, '../..', 'swagger.yaml'));
+  if (yamlSpec && yamlSpec.paths) {
+    const merged = Object.assign({}, require('./gen-swagger.tmp') || {}, {});
+    const allPaths = Object.assign({}, (swaggerJSDoc(options).paths || {}), yamlSpec.paths || {});
+    console.log('\nMERGED_PATHS');
+    console.log(Object.keys(allPaths).sort().join('\n'));
+  }
+} catch (e) {
+  // ignore
+}

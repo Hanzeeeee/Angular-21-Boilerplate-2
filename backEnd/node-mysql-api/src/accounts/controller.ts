@@ -186,6 +186,102 @@ router.get('/validate-reset-token', validateResetTokenSchema, validateResetToken
 router.get('/validate-reset-token/:token', validateResetTokenSchema, validateResetToken);
 router.post('/reset-password', resetPasswordSchema, resetPassword);
 
+/**
+ * @openapi
+ * /accounts:
+ *   get:
+ *     tags: [Accounts]
+ *     summary: Get all accounts (admin)
+ *     responses:
+ *       '200':
+ *         description: List of accounts
+ *   post:
+ *     tags: [Accounts]
+ *     summary: Create new account (admin)
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *               firstName:
+ *                 type: string
+ *               lastName:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *               confirmPassword:
+ *                 type: string
+ *               role:
+ *                 type: string
+ *     responses:
+ *       '200':
+ *         description: Account created
+ *
+ * /accounts/{id}:
+ *   get:
+ *     tags: [Accounts]
+ *     summary: Get account by id
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *     responses:
+ *       '200':
+ *         description: Account object
+ *   put:
+ *     tags: [Accounts]
+ *     summary: Update account
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *               firstName:
+ *                 type: string
+ *               lastName:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *               confirmPassword:
+ *                 type: string
+ *               role:
+ *                 type: string
+ *     responses:
+ *       '200':
+ *         description: Account updated
+ *   delete:
+ *     tags: [Accounts]
+ *     summary: Delete account
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *     responses:
+ *       '200':
+ *         description: Account deleted
+ */
 router.get('/', authorize(Role.Admin), getAll);
 router.get('/:id', authorize(), getById);
 router.post('/', authorize(Role.Admin), createSchema, create);

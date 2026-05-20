@@ -33,6 +33,7 @@ try {
     throw new Error('No JSDoc-generated paths found');
   }
 } catch (err) {
+  // try to load static YAML as a fallback
   try {
     swaggerSpec = YAML.load(path.join(__dirname, '../../../swagger.yaml'));
     swaggerSpec.servers = [
@@ -47,6 +48,24 @@ try {
       servers: [{ url: swaggerBaseUrl, description: 'Production server' }]
     };
   }
+}
+
+// additionally, try to merge paths/components from static YAML into JSDoc spec
+try {
+  const yamlSpec = YAML.load(path.join(__dirname, '../../../swagger.yaml'));
+  swaggerSpec.paths = swaggerSpec.paths || {};
+  if (yamlSpec && yamlSpec.paths) {
+    Object.entries(yamlSpec.paths).forEach(([p, val]: any) => {
+      if (!swaggerSpec.paths[p]) swaggerSpec.paths[p] = val;
+    });
+  }
+  // merge components if present
+  swaggerSpec.components = swaggerSpec.components || {};
+  if (yamlSpec && yamlSpec.components) {
+    swaggerSpec.components = { ...yamlSpec.components, ...swaggerSpec.components };
+  }
+} catch (mergeErr) {
+  // ignore merge errors
 }
 
 router.use('/', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
