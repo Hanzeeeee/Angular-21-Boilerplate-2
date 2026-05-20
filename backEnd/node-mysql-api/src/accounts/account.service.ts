@@ -128,12 +128,16 @@ async function register(params: any, origin: any) {
   return { success: true, message: 'Registration successful, please check your email for verification instructions' };
 }
 
-async function verifyEmail({ token }: any) {
+async function verifyEmail(tokenOrObj: any) {
+  const token = typeof tokenOrObj === 'string' ? tokenOrObj : tokenOrObj?.token;
   console.log('verifyEmail token received:', token);
 
-  const account = await db.Account.findOne({
-    where: { verificationToken: token }
-  });
+  if (!token) {
+    console.error('verifyEmail failed: token is required');
+    throw 'Verification token is required';
+  }
+
+  const account = await db.Account.findOne({ where: { verificationToken: token } });
 
   if (!account) {
     console.error('verifyEmail failed: no account found for token', token);

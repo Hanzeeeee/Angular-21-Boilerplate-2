@@ -9,6 +9,170 @@ import Role from '../_helpers/role';
 import accountService from './account.service';
 import config from '../../config';
 
+/**
+ * @openapi
+ * tags:
+ *   - name: Accounts
+ *     description: Account and authentication endpoints
+ */
+
+/**
+ * @openapi
+ * /accounts/authenticate:
+ *   post:
+ *     tags: [Accounts]
+ *     summary: Authenticate user
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *     responses:
+ *       '200':
+ *         description: Authentication successful
+ */
+
+/**
+ * @openapi
+ * /accounts/register:
+ *   post:
+ *     tags: [Accounts]
+ *     summary: Register new user
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *               firstName:
+ *                 type: string
+ *               lastName:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *               confirmPassword:
+ *                 type: string
+ *               acceptTerms:
+ *                 type: boolean
+ *     responses:
+ *       '200':
+ *         description: Registration successful
+ */
+
+/**
+ * @openapi
+ * /accounts/verify-email:
+ *   get:
+ *     tags: [Accounts]
+ *     summary: Verify email via token (query)
+ *     parameters:
+ *       - in: query
+ *         name: token
+ *         schema:
+ *           type: string
+ *         required: true
+ *     responses:
+ *       '200':
+ *         description: Verification successful
+ *   post:
+ *     tags: [Accounts]
+ *     summary: Verify email via token (body)
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               token:
+ *                 type: string
+ *     responses:
+ *       '200':
+ *         description: Verification successful
+ */
+
+/**
+ * @openapi
+ * /accounts/forgot-password:
+ *   post:
+ *     tags: [Accounts]
+ *     summary: Request password reset
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *     responses:
+ *       '200':
+ *         description: Password reset email sent
+ */
+
+/**
+ * @openapi
+ * /accounts/validate-reset-token:
+ *   post:
+ *     tags: [Accounts]
+ *     summary: Validate reset token
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               token:
+ *                 type: string
+ *     responses:
+ *       '200':
+ *         description: Token is valid
+ *   get:
+ *     tags: [Accounts]
+ *     summary: Validate reset token (query)
+ *     parameters:
+ *       - in: query
+ *         name: token
+ *         schema:
+ *           type: string
+ *         required: true
+ */
+
+/**
+ * @openapi
+ * /accounts/reset-password:
+ *   post:
+ *     tags: [Accounts]
+ *     summary: Reset password
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               token:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *               confirmPassword:
+ *                 type: string
+ */
+
+
 router.post('/authenticate', authenticateSchema, authenticate);
 router.post('/login', authenticateSchema, authenticate);
 router.post('/refresh-token', refreshToken);
@@ -141,7 +305,9 @@ async function verifyEmailQuery(req: any, res: any, next: any) {
     const result: any = await accountService.verifyEmail(req.validatedQuery);
     return res.json({ success: true, message: result?.message || 'Verification successful, you can now login' });
   } catch (error) {
-    next(error);
+    const message = typeof error === 'string' ? error : error?.message || 'Verification failed';
+    console.error('verifyEmailQuery error:', error);
+    return res.status(400).json({ success: false, message });
   }
 }
 
@@ -150,7 +316,9 @@ async function verifyEmail(req: any, res: any, next: any) {
     const result: any = await accountService.verifyEmail(req.body);
     return res.json({ success: true, message: result?.message || 'Verification successful, you can now login' });
   } catch (error) {
-    next(error);
+    const message = typeof error === 'string' ? error : error?.message || 'Verification failed';
+    console.error('verifyEmail error:', error);
+    return res.status(400).json({ success: false, message });
   }
 }
 
